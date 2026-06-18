@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App API Documentation</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #4fc3f7;
+      --green: #4caf82;
+      --red: #f06292;
+      --yellow: #ffd54f;
+      --orange: #ffb74d;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --code-bg: #161b2e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 260px; height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 0 0 2rem 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sidebar-logo p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .sidebar-section {
+      padding: 1rem 0 0;
+    }
+
+    .sidebar-section-title {
+      padding: 0.25rem 1.5rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 1.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar a .badge {
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 20px;
+      font-weight: 700;
+      margin-left: auto;
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: 260px;
+      padding: 2.5rem 3rem;
+      max-width: 960px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--muted); max-width: 600px; }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .meta-chip strong { color: var(--text); }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 3.5rem;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent2);
+    }
+
+    /* ── Endpoint Card ── */
+    .endpoint-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .endpoint-header:hover { background: var(--surface2); }
+
+    .method {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      min-width: 56px;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    .GET    { background: #1b3a2d; color: #4caf82; border: 1px solid #2d6b4a; }
+    .POST   { background: #1e2f4a; color: #64b5f6; border: 1px solid #2e4d7a; }
+    .PUT    { background: #3a2e1a; color: #ffb74d; border: 1px solid #6b4a1a; }
+    .DELETE { background: #3a1e1e; color: #f06292; border: 1px solid #7a2e2e; }
+    .WS     { background: #2a1e3a; color: #ce93d8; border: 1px solid #5a2e7a; }
+
+    .endpoint-path {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .endpoint-desc {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .chevron {
+      margin-left: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .endpoint-body {
+      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .endpoint-card.open .endpoint-body { display: block; }
+    .endpoint-card.open .chevron { transform: rotate(180deg); }
+
+    /* ── Param Table ── */
+    .param-group { margin-bottom: 1.5rem; }
+
+    .param-group-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody tr { border-top: 1px solid var(--border); }
+    tbody td { padding: 0.55rem 0.75rem; vertical-align: top; }
+
+    .field-name {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent2);
+      font-size: 0.82rem;
+    }
+
+    .field-type {
+      color: var(--yellow);
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .required { color: var(--red); font-size: 0.72rem; font-weight: 700; }
+    .optional { color: var(--green); font-size: 0.72rem; font-weight: 700; }
+
+    /* ── Code Block ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 0.5rem 0 1rem;
+      white-space: pre;
+      color: #c9d1d9;
+    }
+
+    .code-block .key   { color: #79c0ff; }
+    .code-block .str   { color: #a5d6ff; }
+    .code-block .num   { color: #ffa657; }
+    .code-block .bool  { color: #ff7b72; }
+    .code-block .null  { color: #8b949e; }
+    .code-block .comment { color: #6e7681; font-style: italic; }
+
+    .code-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+      margin-top: 1rem;
+    }
+
+    /* ── WS Event Card ── */
+    .ws-event {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .ws-event-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1.25rem;
+      cursor: pointer;
+    }
+
+    .ws-event-header:hover { background: var(--surface2); }
+
+    .ws-direction {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .client-to-server { background: #1a2e3a; color: #4fc3f7; border: 1px solid #2e5a7a; }
+    .server-to-client { background: #1e2f1e; color: #81c784; border: 1px solid #2e5a2e; }
+
+    .ws-event-name {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ws-event-body {
+      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .ws-event.open .ws-event-body { display: block; }
+    .ws-event.open .chevron { transform: rotate(180deg); }
+
+    /* ── Schema Box ── */
+    .schema-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 0.5rem 0 1rem;
+    }
+
+    .schema-field {
+      display: flex;
+      gap: 1rem;
+      padding: 0.3rem 0;
+      font-size: 0.84rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .schema-field:last-child { border-bottom: none; }
+
+    /* ── Status Badges ── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .s200 { background: #1b3a2d; color: #4caf82; }
+    .s201 { background: #1b3a2d; color: #66bb6a; }
+    .s400 { background: #3a2e1a; color: #ffb74d; }
+    .s404 { background: #3a2414; color: #ff8a65; }
+
+    /* ── DB Schema ── */
+    .db-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .db-table-header {
+      background: var(--surface2);
+      padding: 0.75rem 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ── Misc ── */
+    .note {
+      background: #1e2a1e;
+      border: 1px solid #2e5a2e;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #a5d6a7;
+      margin: 1rem 0;
+    }
+
+    .warn {
+      background: #2a2014;
+      border: 1px solid #5a4a1a;
+      border-left: 4px solid var(--yellow);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #ffe082;
+      margin: 1rem 0;
+    }
+
+    .base-url-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--accent2);
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h1>⚡ Chat App API</h1>
+    <p>v1.0 &nbsp;·&nbsp; REST + WebSocket</p>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview">Getting Started</a>
+    <a href="#base-url">Base URL</a>
+    <a href="#errors">Error Format</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">REST Endpoints</div>
+    <a href="#get-messages"><span class="badge GET" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">GET</span> &nbsp;/api/messages</a>
+    <a href="#get-message-id"><span class="badge GET" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">GET</span> &nbsp;/api/messages/:id</a>
+    <a href="#post-messages"><span class="badge POST" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">POST</span> &nbsp;/api/messages</a>
+    <a href="#put-messages"><span class="badge PUT" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">PUT</span> &nbsp;/api/messages/:id</a>
+    <a href="#delete-messages"><span class="badge DELETE" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">DEL</span> &nbsp;/api/messages/:id</a>
+    <a href="#get-users"><span class="badge GET" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">GET</span> &nbsp;/api/users</a>
+    <a href="#health"><span class="badge GET" style="font-size:0.65rem;padding:1px 5px;border-radius:4px;">GET</span> &nbsp;/health</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">WebSocket Events</div>
+    <a href="#ws-overview">Connection</a>
+    <a href="#ws-client-events">Client → Server</a>
+    <a href="#ws-server-events">Server → Client</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Database</div>
+    <a href="#db-schema">Schema</a>
+  </div>
+</nav>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="main">
+
+  <!-- Hero -->
+  <div class="hero" id="overview">
+    <h1>Chat App API</h1>
+    <p>Complete REST API + WebSocket documentation for the landing-chat-app backend. All endpoints, request payloads, response structures, and real-time event schemas.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">Port <strong>3020</strong></div>
+      <div class="meta-chip">Runtime <strong>Node.js / Express</strong></div>
+      <div class="meta-chip">DB <strong>PostgreSQL</strong></div>
+      <div class="meta-chip">Auth <strong>None</strong></div>
+      <div class="meta-chip">Format <strong>JSON</strong></div>
+    </div>
+  </div>
+
+  <!-- Base URL -->
+  <div class="section" id="base-url">
+    <div class="section-title">Base URL</div>
+    <div class="base-url-box">🌐 http://localhost:3020</div>
+    <div class="base-url-box" style="color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+    <div class="note">All REST endpoints are prefixed with <code>/api</code>. No authentication required on any endpoint.</div>
+  </div>
+
+  <!-- Error Format -->
+  <div class="section" id="errors">
+    <div class="section-title">Standard Error Format</div>
+    <p style="color:var(--muted);margin-bottom:1rem;">All error responses follow this structure:</p>
+    <div class="code-label">Error Response</div>
+    <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"Human-readable error message"</span>
+}</div>
+  </div>
+
+  <!-- ════════ REST ENDPOINTS ════════ -->
+  <div class="section">
+    <div class="section-title">REST Endpoints</div>
+
+    <!-- GET /api/messages -->
+    <div class="endpoint-card" id="get-messages">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method GET">GET</span>
+        <span class="endpoint-path">/api/messages</span>
+        <span class="endpoint-desc">Fetch all messages</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="note">Returns all non-deleted messages from the in-memory store, ordered by creation time.</div>
+
+        <div class="code-label">Request</div>
+        <div class="code-block"><span class="comment">// No request body or query parameters needed</span>
+GET /api/messages HTTP/1.1
+Host: localhost:3020</div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span> &nbsp; Success Response</div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>:           <span class="num">1</span>,
+      <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+      <span class="key">"message"</span>:     <span class="str">"Hello everyone!"</span>,
+      <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+      <span class="key">"is_edited"</span>:   <span class="bool">false</span>,
+      <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+      <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+      <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>
+    }
+  ]
+}</div>
+      </div>
+    </div>
+
+    <!-- GET /api/messages/:id -->
+    <div class="endpoint-card" id="get-message-id">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method GET">GET</span>
+        <span class="endpoint-path">/api/messages/:id</span>
+        <span class="endpoint-desc">Fetch single message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="param-group">
+          <div class="param-group-title">URL Parameters</div>
+          <table>
+            <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">id</span></td>
+                <td><span class="field-type">number</span></td>
+                <td><span class="required">Required</span></td>
+                <td>Numeric ID of the message</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-label">Request</div>
+        <div class="code-block">GET /api/messages/1 HTTP/1.1
+Host: localhost:3020</div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span> &nbsp; Success Response</div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:           <span class="num">1</span>,
+    <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:     <span class="str">"Hello everyone!"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+    <span class="key">"is_edited"</span>:   <span class="bool">false</span>,
+    <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+    <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+    <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>
+  }
+}</div>
+
+        <div class="code-label"><span class="status-badge s404">404 Not Found</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"Message not found"</span>
+}</div>
+      </div>
+    </div>
+
+    <!-- POST /api/messages -->
+    <div class="endpoint-card" id="post-messages">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method POST">POST</span>
+        <span class="endpoint-path">/api/messages</span>
+        <span class="endpoint-desc">Create a new message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="note">After creating, broadcasts a <strong>new_message</strong> WebSocket event to all connected clients.</div>
+
+        <div class="param-group">
+          <div class="param-group-title">Request Body &nbsp;<span style="color:var(--muted);font-size:0.75rem;text-transform:none;font-weight:400;">Content-Type: application/json</span></div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">sender</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>—</td>
+                <td>Username of the message sender</td>
+              </tr>
+              <tr>
+                <td><span class="field-name">message</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>—</td>
+                <td>Text content of the message</td>
+              </tr>
+              <tr>
+                <td><span class="field-name">message_type</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="optional">Optional</span></td>
+                <td><code>"text"</code></td>
+                <td>Type of message (e.g. text, image)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-label">Request Payload</div>
+        <div class="code-block">POST /api/messages HTTP/1.1
+Host: localhost:3020
+Content-Type: application/json
+
+{
+  <span class="key">"sender"</span>:       <span class="str">"john_doe"</span>,
+  <span class="key">"message"</span>:      <span class="str">"Hello everyone!"</span>,
+  <span class="key">"message_type"</span>: <span class="str">"text"</span>       <span class="comment">// optional</span>
+}</div>
+
+        <div class="code-label"><span class="status-badge s201">201 Created</span> &nbsp; Success Response</div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:           <span class="num">5</span>,
+    <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:     <span class="str">"Hello everyone!"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+    <span class="key">"is_edited"</span>:   <span class="bool">false</span>,
+    <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+    <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+    <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>
+  }
+}</div>
+
+        <div class="code-label"><span class="status-badge s400">400 Bad Request</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"sender and message are required"</span>
+}</div>
+      </div>
+    </div>
+
+    <!-- PUT /api/messages/:id -->
+    <div class="endpoint-card" id="put-messages">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method PUT">PUT</span>
+        <span class="endpoint-path">/api/messages/:id</span>
+        <span class="endpoint-desc">Edit a message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="note">Sets <code>is_edited: true</code> and updates <code>updated_at</code>. Broadcasts <strong>message_updated</strong> WebSocket event.</div>
+
+        <div class="param-group">
+          <div class="param-group-title">URL Parameters</div>
+          <table>
+            <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">id</span></td>
+                <td><span class="field-type">number</span></td>
+                <td><span class="required">Required</span></td>
+                <td>Numeric ID of the message to update</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="param-group">
+          <div class="param-group-title">Request Body</div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">message</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>New text content for the message</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-label">Request Payload</div>
+        <div class="code-block">PUT /api/messages/5 HTTP/1.1
+Host: localhost:3020
+Content-Type: application/json
+
+{
+  <span class="key">"message"</span>: <span class="str">"Updated message content"</span>
+}</div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:           <span class="num">5</span>,
+    <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:     <span class="str">"Updated message content"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+    <span class="key">"is_edited"</span>:   <span class="bool">true</span>,
+    <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+    <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+    <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:45:00.000Z"</span>
+  }
+}</div>
+
+        <div class="code-label"><span class="status-badge s400">400 Bad Request</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"message is required"</span>
+}</div>
+
+        <div class="code-label"><span class="status-badge s404">404 Not Found</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"Message not found"</span>
+}</div>
+      </div>
+    </div>
+
+    <!-- DELETE /api/messages/:id -->
+    <div class="endpoint-card" id="delete-messages">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method DELETE">DEL</span>
+        <span class="endpoint-path">/api/messages/:id</span>
+        <span class="endpoint-desc">Soft-delete a message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="warn">This is a <strong>soft delete</strong> — sets <code>is_deleted: true</code>. The record is not removed from the database. Broadcasts <strong>message_deleted</strong> WebSocket event.</div>
+
+        <div class="param-group">
+          <div class="param-group-title">URL Parameters</div>
+          <table>
+            <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">id</span></td>
+                <td><span class="field-type">number</span></td>
+                <td><span class="required">Required</span></td>
+                <td>Numeric ID of the message to delete</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-label">Request</div>
+        <div class="code-block">DELETE /api/messages/5 HTTP/1.1
+Host: localhost:3020
+<span class="comment">// No request body needed</span></div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"message"</span>: <span class="str">"Message deleted"</span>,
+  <span class="key">"id"</span>:      <span class="num">5</span>
+}</div>
+
+        <div class="code-label"><span class="status-badge s404">404 Not Found</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">false</span>,
+  <span class="key">"error"</span>:   <span class="str">"Message not found"</span>
+}</div>
+      </div>
+    </div>
+
+    <!-- GET /api/users -->
+    <div class="endpoint-card" id="get-users">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method GET">GET</span>
+        <span class="endpoint-path">/api/users</span>
+        <span class="endpoint-desc">List online users</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="note">Returns all currently connected WebSocket users from the in-memory store.</div>
+
+        <div class="code-label">Request</div>
+        <div class="code-block">GET /api/users HTTP/1.1
+Host: localhost:3020</div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span></div>
+        <div class="code-block">{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"count"</span>:   <span class="num">2</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"socketId"</span>:  <span class="str">"127.0.0.11718700000"</span>,
+      <span class="key">"name"</span>:      <span class="str">"john_doe"</span>,
+      <span class="key">"joined_at"</span>: <span class="str">"2026-06-18T10:00:00.000Z"</span>
+    }
+  ]
+}</div>
+      </div>
+    </div>
+
+    <!-- GET /health -->
+    <div class="endpoint-card" id="health">
+      <div class="endpoint-header" onclick="toggleCard(this)">
+        <span class="method GET">GET</span>
+        <span class="endpoint-path">/health</span>
+        <span class="endpoint-desc">Health check</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="code-label">Request</div>
+        <div class="code-block">GET /health HTTP/1.1
+Host: localhost:3020</div>
+
+        <div class="code-label"><span class="status-badge s200">200 OK</span></div>
+        <div class="code-block">{
+  <span class="key">"status"</span>: <span class="str">"ok"</span>
+}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ WEBSOCKET ════════ -->
+  <div class="section" id="ws-overview">
+    <div class="section-title">WebSocket</div>
+
+    <p style="color:var(--muted);margin-bottom:1rem;">The server uses the native <code>ws</code> library. All messages are JSON strings.</p>
+
+    <div class="base-url-box" style="color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+
+    <div class="note">On successful connection, the server automatically sends a <strong>history</strong> event with all existing messages, and an <strong>online_users</strong> event.</div>
+
+    <div class="code-label">General Message Format</div>
+    <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"event_name"</span>,
+  <span class="key">"data"</span>:  { <span class="comment">/* event-specific payload */</span> }
+}</div>
+  </div>
+
+  <!-- Client → Server -->
+  <div class="section" id="ws-client-events">
+    <div class="section-title">WebSocket — Client → Server Events</div>
+
+    <!-- join -->
+    <div class="ws-event" id="ws-join">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">join</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Register a username</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="param-group">
+          <div class="param-group-title">Payload Fields</div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">name</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>Display name for the user</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"join"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"name"</span>: <span class="str">"john_doe"</span>
+  }
+}</div>
+        <div class="note">Triggers broadcast of <strong>user_joined</strong> and updated <strong>online_users</strong> to all clients.</div>
+      </div>
+    </div>
+
+    <!-- send_message -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">send_message</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Post a message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="param-group">
+          <div class="param-group-title">Payload Fields</div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">sender</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>—</td>
+                <td>Sender's username</td>
+              </tr>
+              <tr>
+                <td><span class="field-name">message</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>—</td>
+                <td>Message text content</td>
+              </tr>
+              <tr>
+                <td><span class="field-name">message_type</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="optional">Optional</span></td>
+                <td><code>"text"</code></td>
+                <td>Type of message</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"send_message"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"sender"</span>:       <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:      <span class="str">"Hey, how are you?"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- edit_message -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">edit_message</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Edit an existing message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="param-group">
+          <div class="param-group-title">Payload Fields</div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">id</span></td>
+                <td><span class="field-type">number</span></td>
+                <td><span class="required">Required</span></td>
+                <td>ID of the message to edit</td>
+              </tr>
+              <tr>
+                <td><span class="field-name">message</span></td>
+                <td><span class="field-type">string</span></td>
+                <td><span class="required">Required</span></td>
+                <td>New message content</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"edit_message"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:      <span class="num">5</span>,
+    <span class="key">"message"</span>: <span class="str">"Corrected message"</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- delete_message -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">delete_message</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Delete a message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="param-group">
+          <div class="param-group-title">Payload Fields</div>
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="field-name">id</span></td>
+                <td><span class="field-type">number</span></td>
+                <td><span class="required">Required</span></td>
+                <td>ID of the message to delete</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"delete_message"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="num">5</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- typing_start -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">typing_start</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">User started typing</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"typing_start"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"sender"</span>: <span class="str">"john_doe"</span>
+  }
+}</div>
+        <div class="note">Broadcasts a <strong>typing</strong> event with <code>is_typing: true</code> to all other clients.</div>
+      </div>
+    </div>
+
+    <!-- typing_stop -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction client-to-server">Client → Server</span>
+        <span class="ws-event-name">typing_stop</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">User stopped typing</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Send Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"typing_stop"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"sender"</span>: <span class="str">"john_doe"</span>
+  }
+}</div>
+        <div class="note">Broadcasts a <strong>typing</strong> event with <code>is_typing: false</code> to all other clients.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server → Client -->
+  <div class="section" id="ws-server-events">
+    <div class="section-title">WebSocket — Server → Client Events</div>
+
+    <!-- history -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">history</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Sent on connection</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"history"</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>:           <span class="num">1</span>,
+      <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+      <span class="key">"message"</span>:     <span class="str">"Hello!"</span>,
+      <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+      <span class="key">"is_edited"</span>:   <span class="bool">false</span>,
+      <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+      <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:00:00.000Z"</span>,
+      <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:00:00.000Z"</span>
+    }
+  ]
+}</div>
+      </div>
+    </div>
+
+    <!-- online_users -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">online_users</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Current online users list</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"online_users"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"count"</span>: <span class="num">2</span>,
+    <span class="key">"users"</span>: [
+      {
+        <span class="key">"socketId"</span>:  <span class="str">"127.0.0.11718700000"</span>,
+        <span class="key">"name"</span>:      <span class="str">"john_doe"</span>,
+        <span class="key">"joined_at"</span>: <span class="str">"2026-06-18T10:00:00.000Z"</span>
+      }
+    ]
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- user_joined -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">user_joined</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">New user joined</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"user_joined"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"name"</span>:         <span class="str">"jane_doe"</span>,
+    <span class="key">"online_count"</span>: <span class="num">3</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- user_left -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">user_left</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">User disconnected</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"user_left"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"name"</span>:         <span class="str">"jane_doe"</span>,
+    <span class="key">"online_count"</span>: <span class="num">2</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- new_message -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">new_message</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Broadcast on POST / send_message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"new_message"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:           <span class="num">5</span>,
+    <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:     <span class="str">"Hey, how are you?"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+    <span class="key">"is_edited"</span>:   <span class="bool">false</span>,
+    <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+    <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+    <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- message_updated -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">message_updated</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Broadcast on PUT / edit_message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"message_updated"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>:           <span class="num">5</span>,
+    <span class="key">"sender"</span>:      <span class="str">"john_doe"</span>,
+    <span class="key">"message"</span>:     <span class="str">"Corrected message"</span>,
+    <span class="key">"message_type"</span>: <span class="str">"text"</span>,
+    <span class="key">"is_edited"</span>:   <span class="bool">true</span>,
+    <span class="key">"is_deleted"</span>:  <span class="bool">false</span>,
+    <span class="key">"created_at"</span>:  <span class="str">"2026-06-18T10:30:00.000Z"</span>,
+    <span class="key">"updated_at"</span>:  <span class="str">"2026-06-18T10:45:00.000Z"</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- message_deleted -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">message_deleted</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Broadcast on DELETE / delete_message</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"message_deleted"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="num">5</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- typing -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">typing</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Typing indicator</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>: <span class="str">"typing"</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"sender"</span>:       <span class="str">"john_doe"</span>,
+    <span class="key">"is_typing"</span>:    <span class="bool">true</span>,
+    <span class="key">"typing_users"</span>: [
+      {
+        <span class="key">"sender"</span>:     <span class="str">"john_doe"</span>,
+        <span class="key">"started_at"</span>: <span class="str">"2026-06-18T10:31:00.000Z"</span>
+      }
+    ]
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- error -->
+    <div class="ws-event">
+      <div class="ws-event-header" onclick="toggleWS(this)">
+        <span class="ws-direction server-to-client">Server → Client</span>
+        <span class="ws-event-name">error</span>
+        <span style="color:var(--muted);font-size:0.82rem;margin-left:auto;">Validation / processing error</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="ws-event-body">
+        <div class="code-label">Received Payload</div>
+        <div class="code-block">{
+  <span class="key">"event"</span>:   <span class="str">"error"</span>,
+  <span class="key">"message"</span>: <span class="str">"name is required"</span>
+}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ DATABASE ════════ -->
+  <div class="section" id="db-schema">
+    <div class="section-title">Database Schema</div>
+
+    <div class="warn">Currently the server stores data <strong>in-memory</strong> via <code>src/store.js</code>. The PostgreSQL table is defined but not yet active — data resets on server restart.</div>
+
+    <div class="db-table">
+      <div class="db-table-header">🗄 Table: <code>chatapp</code></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Type</th>
+            <th>Nullable</th>
+            <th>Default</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="field-name">id</span></td>
+            <td><span class="field-type">SERIAL</span></td>
+            <td>NOT NULL</td>
+            <td>auto-increment</td>
+            <td>Primary Key</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">room</span></td>
+            <td><span class="field-type">VARCHAR(100)</span></td>
+            <td>NOT NULL</td>
+            <td><code>"general"</code></td>
+            <td>Chat room name</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">sender</span></td>
+            <td><span class="field-type">VARCHAR(100)</span></td>
+            <td>NOT NULL</td>
+            <td>—</td>
+            <td>Username</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">message</span></td>
+            <td><span class="field-type">TEXT</span></td>
+            <td>NOT NULL</td>
+            <td>—</td>
+            <td>Message body</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">message_type</span></td>
+            <td><span class="field-type">VARCHAR(20)</span></td>
+            <td>NOT NULL</td>
+            <td><code>"text"</code></td>
+            <td>e.g. text, image</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">is_edited</span></td>
+            <td><span class="field-type">BOOLEAN</span></td>
+            <td>NOT NULL</td>
+            <td><code>FALSE</code></td>
+            <td>Edit flag</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">is_deleted</span></td>
+            <td><span class="field-type">BOOLEAN</span></td>
+            <td>NOT NULL</td>
+            <td><code>FALSE</code></td>
+            <td>Soft delete flag</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">created_at</span></td>
+            <td><span class="field-type">TIMESTAMPTZ</span></td>
+            <td>NOT NULL</td>
+            <td><code>NOW()</code></td>
+            <td>Creation timestamp</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">updated_at</span></td>
+            <td><span class="field-type">TIMESTAMPTZ</span></td>
+            <td>NOT NULL</td>
+            <td><code>NOW()</code></td>
+            <td>Last update timestamp</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-label" style="margin-top:1.5rem;">Create Table SQL</div>
+    <div class="code-block">CREATE TABLE chatapp (
+  id           SERIAL        PRIMARY KEY,
+  room         VARCHAR(100)  NOT NULL DEFAULT <span class="str">'general'</span>,
+  sender       VARCHAR(100)  NOT NULL,
+  message      TEXT          NOT NULL,
+  message_type VARCHAR(20)   NOT NULL DEFAULT <span class="str">'text'</span>,
+  is_edited    BOOLEAN       NOT NULL DEFAULT FALSE,
+  is_deleted   BOOLEAN       NOT NULL DEFAULT FALSE,
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);</div>
+  </div>
+
+  <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.8rem;text-align:center;">
+    Chat App API Docs &nbsp;·&nbsp; Generated 2026-06-18 &nbsp;·&nbsp; Port 3020
+  </div>
+
+</main>
+
+<script>
+  function toggleCard(header) {
+    header.parentElement.classList.toggle('open');
+  }
+  function toggleWS(header) {
+    header.parentElement.classList.toggle('open');
+  }
+
+  // Open all cards by default
+  document.querySelectorAll('.endpoint-card, .ws-event').forEach(el => {
+    el.classList.add('open');
+  });
+
+  // Smooth scroll + active sidebar link
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('.sidebar a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

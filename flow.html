@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App — System Flow</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #4fc3f7;
+      --green: #4caf82;
+      --red: #f06292;
+      --yellow: #ffd54f;
+      --orange: #ffb74d;
+      --purple: #ce93d8;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --code-bg: #161b2e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 260px; height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 0 0 2rem 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sidebar-logo p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .sidebar-section { padding: 1rem 0 0; }
+
+    .sidebar-section-title {
+      padding: 0.25rem 1.5rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 1.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar a:hover, .sidebar a.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-left-color: var(--accent);
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: 260px;
+      padding: 2.5rem 3rem;
+      max-width: 980px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--muted); max-width: 620px; }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .meta-chip strong { color: var(--text); }
+
+    /* ── Section ── */
+    .section { margin-bottom: 3.5rem; }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent2);
+    }
+
+    /* ── Architecture Diagram ── */
+    .arch-diagram {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .arch-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .arch-box {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 1.4rem;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .arch-box.client  { border-color: var(--accent2); }
+    .arch-box.express { border-color: var(--green); }
+    .arch-box.ws      { border-color: var(--purple); }
+    .arch-box.store   { border-color: var(--yellow); }
+
+    .arch-box .arch-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .arch-box.client  .arch-label { color: var(--accent2); }
+    .arch-box.express .arch-label { color: var(--green); }
+    .arch-box.ws      .arch-label { color: var(--purple); }
+    .arch-box.store   .arch-label { color: var(--yellow); }
+
+    .arch-box .arch-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .arch-box .arch-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .arch-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0.5rem;
+    }
+
+    .arch-arrow .arrow-line {
+      width: 60px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+    }
+
+    .arch-arrow .arrow-line::after {
+      content: '▶';
+      position: absolute;
+      right: -8px;
+      top: -7px;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .arch-arrow .arrow-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      white-space: nowrap;
+      margin-top: 0.3rem;
+    }
+
+    .arch-vert {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.3rem 0;
+    }
+
+    .arch-vert .vline {
+      width: 2px;
+      height: 40px;
+      background: var(--border);
+      position: relative;
+    }
+
+    .arch-vert .vline::after {
+      content: '▼';
+      position: absolute;
+      bottom: -10px;
+      left: -5px;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .arch-vert .arrow-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+
+    .arch-middle {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2rem;
+      margin: 0.5rem 0;
+    }
+
+    /* ── Flow Steps ── */
+    .flow-step {
+      display: flex;
+      gap: 1.2rem;
+      margin-bottom: 1rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      min-width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .step-content { flex: 1; }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .step-desc {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .step-file {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 7px;
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: var(--accent2);
+      margin-top: 0.3rem;
+    }
+
+    /* ── Code Block ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 0.5rem 0 1rem;
+      white-space: pre;
+      color: #c9d1d9;
+    }
+
+    .code-block .key     { color: #79c0ff; }
+    .code-block .str     { color: #a5d6ff; }
+    .code-block .num     { color: #ffa657; }
+    .code-block .bool    { color: #ff7b72; }
+    .code-block .comment { color: #6e7681; font-style: italic; }
+    .code-block .arrow   { color: var(--accent); font-weight: bold; }
+    .code-block .tag     { color: var(--green); }
+
+    .code-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Flow Cards ── */
+    .flow-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.2rem;
+    }
+
+    .flow-card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .flow-card-header:hover { background: var(--surface2); }
+
+    .flow-card-body {
+      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .flow-card.open .flow-card-body { display: block; }
+    .flow-card.open .chevron { transform: rotate(180deg); }
+
+    .chevron {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .flow-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-blue   { background: #1e2f4a; border: 1px solid #2e4d7a; }
+    .icon-green  { background: #1b3a2d; border: 1px solid #2d6b4a; }
+    .icon-purple { background: #2a1e3a; border: 1px solid #5a2e7a; }
+    .icon-yellow { background: #3a2e1a; border: 1px solid #6b4a1a; }
+    .icon-red    { background: #3a1e1e; border: 1px solid #7a2e2e; }
+
+    .flow-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .flow-card-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -1.6rem;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+    }
+
+    .timeline-item.green::before  { background: var(--green); }
+    .timeline-item.yellow::before { background: var(--yellow); }
+    .timeline-item.purple::before { background: var(--purple); }
+    .timeline-item.red::before    { background: var(--red); }
+
+    .timeline-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+      color: var(--muted);
+    }
+
+    .timeline-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .timeline-desc {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    /* ── Data Table ── */
+    .data-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .data-table-header {
+      background: var(--surface2);
+      padding: 0.7rem 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody tr { border-top: 1px solid var(--border); }
+    tbody td { padding: 0.55rem 0.75rem; vertical-align: top; }
+
+    .field-name {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent2);
+      font-size: 0.82rem;
+    }
+
+    .field-type {
+      color: var(--yellow);
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Note / Warn ── */
+    .note {
+      background: #1e2a1e;
+      border: 1px solid #2e5a2e;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #a5d6a7;
+      margin: 1rem 0;
+    }
+
+    .warn {
+      background: #2a2014;
+      border: 1px solid #5a4a1a;
+      border-left: 4px solid var(--yellow);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #ffe082;
+      margin: 1rem 0;
+    }
+
+    .info {
+      background: #1a1e3a;
+      border: 1px solid #2e3a6a;
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #b0b8f0;
+      margin: 1rem 0;
+    }
+
+    /* ── Scenario Block ── */
+    .scenario {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .scenario-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent2);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .scenario-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .scenario-step {
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-start;
+      font-size: 0.85rem;
+    }
+
+    .scenario-step .sn {
+      min-width: 22px;
+      height: 22px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .scenario-step .sd { color: var(--muted); }
+    .scenario-step .sd strong { color: var(--text); }
+    .scenario-step .sd code {
+      background: var(--surface2);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--accent2);
+    }
+
+    /* ── Misc ── */
+    .badge-ws {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: #2a1e3a;
+      color: var(--purple);
+      border: 1px solid #5a2e7a;
+    }
+
+    .badge-http {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: #1e2f4a;
+      color: var(--accent2);
+      border: 1px solid #2e4d7a;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .mini-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+
+    .mini-card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .mini-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .mini-card ul li {
+      font-size: 0.84rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mini-card ul li::before {
+      content: '›';
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .mini-card ul li strong { color: var(--text); }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.5rem; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h1>⚡ Chat App Flow</h1>
+    <p>System Architecture &amp; Data Flow</p>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview">Introduction</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#tech-stack">Tech Stack</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Core Flows</div>
+    <a href="#server-start">1. Server Startup</a>
+    <a href="#rest-flow">2. REST API Flow</a>
+    <a href="#ws-flow">3. WebSocket Flow</a>
+    <a href="#store-flow">4. Data Store</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Lifecycle</div>
+    <a href="#lifecycle">Complete Lifecycle</a>
+    <a href="#scenarios">Example Scenarios</a>
+    <a href="#limitations">Limitations</a>
+  </div>
+</nav>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="main">
+
+  <!-- Hero -->
+  <div class="hero" id="overview">
+    <h1>System Flow</h1>
+    <p>Chat App backend ka complete architecture aur data flow — server startup se lekar real-time message delivery tak, step-by-step.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">Runtime <strong>Node.js / Express</strong></div>
+      <div class="meta-chip">Real-time <strong>WebSocket (ws)</strong></div>
+      <div class="meta-chip">Storage <strong>In-Memory</strong></div>
+      <div class="meta-chip">Port <strong>3020</strong></div>
+      <div class="meta-chip">Auth <strong>None</strong></div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="section" id="architecture">
+    <div class="section-title">Architecture Overview</div>
+
+    <div class="arch-diagram">
+
+      <!-- Client row -->
+      <div class="arch-row">
+        <div class="arch-box client">
+          <div class="arch-label">Layer 1</div>
+          <div class="arch-name">Client</div>
+          <div class="arch-sub">Browser / Postman / App</div>
+        </div>
+      </div>
+
+      <!-- Two arrows down -->
+      <div class="arch-middle" style="margin-top:1rem;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;">
+          <div style="width:2px;height:36px;background:var(--border);position:relative;">
+            <span style="position:absolute;bottom:-10px;left:-5px;font-size:0.7rem;color:var(--muted);">▼</span>
+          </div>
+          <div style="font-size:0.65rem;color:var(--accent2);margin-top:0.6rem;">HTTP REST</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;">
+          <div style="width:2px;height:36px;background:var(--border);position:relative;">
+            <span style="position:absolute;bottom:-10px;left:-5px;font-size:0.7rem;color:var(--muted);">▼</span>
+          </div>
+          <div style="font-size:0.65rem;color:var(--purple);margin-top:0.6rem;">WebSocket</div>
+        </div>
+      </div>
+
+      <!-- Express + WS row -->
+      <div class="arch-row" style="gap:2rem;margin-top:0.4rem;">
+        <div class="arch-box express">
+          <div class="arch-label">Layer 2a</div>
+          <div class="arch-name">Express Router</div>
+          <div class="arch-sub">chatRoutes.js</div>
+        </div>
+        <div class="arch-box ws">
+          <div class="arch-label">Layer 2b</div>
+          <div class="arch-name">WebSocket Server</div>
+          <div class="arch-sub">websocket.js</div>
+        </div>
+      </div>
+
+      <!-- Arrow down to store -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-top:1rem;">
+        <div style="width:2px;height:36px;background:var(--border);position:relative;">
+          <span style="position:absolute;bottom:-10px;left:-5px;font-size:0.7rem;color:var(--muted);">▼</span>
+        </div>
+        <div style="font-size:0.65rem;color:var(--yellow);margin-top:0.6rem;">read / write</div>
+      </div>
+
+      <!-- Store -->
+      <div class="arch-row" style="margin-top:0.4rem;">
+        <div class="arch-box store">
+          <div class="arch-label">Layer 3</div>
+          <div class="arch-name">In-Memory Store</div>
+          <div class="arch-sub">store.js — messages, users, typing</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="info">
+      Express aur WebSocket <strong>ek hi HTTP server</strong> pe run hote hain — port 3020. REST ke liye <code>/api/*</code> aur WebSocket ke liye <code>/ws</code> path use hota hai.
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="section" id="tech-stack">
+    <div class="section-title">Tech Stack</div>
+    <div class="two-col">
+      <div class="mini-card">
+        <div class="mini-card-title">Backend</div>
+        <ul>
+          <li><strong>Node.js</strong> — runtime</li>
+          <li><strong>Express.js</strong> — HTTP server &amp; routing</li>
+          <li><strong>ws</strong> — native WebSocket library</li>
+          <li><strong>dotenv</strong> — environment config</li>
+          <li><strong>cors</strong> — cross-origin requests</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title">Storage</div>
+        <ul>
+          <li><strong>In-Memory</strong> — active (store.js)</li>
+          <li><strong>PostgreSQL</strong> — schema ready, inactive</li>
+          <li><strong>pg</strong> — PostgreSQL client</li>
+          <li><strong>Data resets</strong> on server restart</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FLOW 1: SERVER STARTUP ══════════ -->
+  <div class="section" id="server-start">
+    <div class="section-title">1. Server Startup Flow</div>
+
+    <div class="flow-card open" id="fc-startup">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-green">🚀</div>
+        <div>
+          <div class="flow-card-title">app.js — Entry Point</div>
+          <div class="flow-card-sub">Server initialize hone ka complete sequence</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-label">Step 1</div>
+            <div class="timeline-title">Dependencies load</div>
+            <div class="timeline-desc">Express, CORS, WebSocket, dotenv aur routes import hote hain.</div>
+            <span class="step-file">src/app.js</span>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Step 2</div>
+            <div class="timeline-title">Express app configure</div>
+            <div class="timeline-desc">JSON body parser, CORS middleware attach hoti hai. <code>/api</code> routes register hote hain.</div>
+            <span class="step-file">src/routes/chatRoutes.js</span>
+          </div>
+          <div class="timeline-item purple">
+            <div class="timeline-label">Step 3</div>
+            <div class="timeline-title">HTTP Server create</div>
+            <div class="timeline-desc"><code>http.createServer(app)</code> se ek raw HTTP server banta hai — ye Express aur WebSocket dono ke liye common hai.</div>
+          </div>
+          <div class="timeline-item yellow">
+            <div class="timeline-label">Step 4</div>
+            <div class="timeline-title">WebSocket attach</div>
+            <div class="timeline-desc"><code>setupWebSocket(server, app)</code> call hota hai. WebSocketServer same HTTP server se attach ho jaata hai <code>/ws</code> path pe.</div>
+            <span class="step-file">src/websocket.js</span>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Step 5</div>
+            <div class="timeline-title">Server listen karta hai</div>
+            <div class="timeline-desc">Port 3020 pe listen shuru. Ab REST aur WebSocket dono ready hain.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FLOW 2: REST API ══════════ -->
+  <div class="section" id="rest-flow">
+    <div class="section-title">2. REST API Flow</div>
+
+    <div class="info">REST API mainly message CRUD ke liye hai. Har successful write operation ke baad WebSocket broadcast bhi hota hai taaki connected clients ko real-time update mile.</div>
+
+    <!-- POST flow -->
+    <div class="flow-card open">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-blue">📨</div>
+        <div>
+          <div class="flow-card-title">POST /api/messages — Message bhejne ka flow</div>
+          <div class="flow-card-sub">REST se message create karna</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-label">Client</div>
+            <div class="timeline-title">HTTP POST request</div>
+            <div class="timeline-desc">Client <code>sender</code> aur <code>message</code> body mein bhejta hai.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-label">Router</div>
+            <div class="timeline-title">Validation</div>
+            <div class="timeline-desc"><code>sender</code> aur <code>message</code> present hain ya nahi check hota hai. Agar nahi — <code>400 Bad Request</code> return hota hai.</div>
+            <span class="step-file">chatRoutes.js:20</span>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Store</div>
+            <div class="timeline-title">store.addMessage()</div>
+            <div class="timeline-desc">In-memory array mein nayi message object push hoti hai. Auto-increment ID milta hai, timestamps set hote hain.</div>
+            <span class="step-file">store.js:16</span>
+          </div>
+          <div class="timeline-item purple">
+            <div class="timeline-label">Broadcast</div>
+            <div class="timeline-title">WebSocket broadcast</div>
+            <div class="timeline-desc"><code>wsBroadcast({ event: 'new_message', data: newMsg })</code> call hoti hai — sabhi connected WebSocket clients ko nayi message milti hai.</div>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Response</div>
+            <div class="timeline-title">201 Created</div>
+            <div class="timeline-desc">Nayi message object JSON response mein return hoti hai.</div>
+          </div>
+        </div>
+
+        <div class="code-label">Request → Store → Broadcast</div>
+        <div class="code-block"><span class="comment">// 1. Client se aata hai</span>
+POST /api/messages
+{ <span class="key">"sender"</span>: <span class="str">"Rahul"</span>, <span class="key">"message"</span>: <span class="str">"Hello!"</span> }
+
+<span class="comment">// 2. store.js mein save hota hai</span>
+{ id: <span class="num">1</span>, sender: <span class="str">"Rahul"</span>, message: <span class="str">"Hello!"</span>, is_edited: <span class="bool">false</span>, ... }
+
+<span class="comment">// 3. WebSocket se sabko broadcast</span>
+{ <span class="key">"event"</span>: <span class="str">"new_message"</span>, <span class="key">"data"</span>: { id: <span class="num">1</span>, ... } }</div>
+      </div>
+    </div>
+
+    <!-- GET flow -->
+    <div class="flow-card">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-green">📋</div>
+        <div>
+          <div class="flow-card-title">GET /api/messages — Messages fetch karna</div>
+          <div class="flow-card-sub">Sirf read, koi broadcast nahi</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Client request karta hai</div>
+            <div class="step-desc">No body, no params needed.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">store.getAllMessages()</div>
+            <div class="step-desc">In-memory array filter hota hai — <code>is_deleted: true</code> wale messages hata diye jaate hain.</div>
+            <span class="step-file">store.js:8</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">200 OK response</div>
+            <div class="step-desc">Filtered messages array return hoti hai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE flow -->
+    <div class="flow-card">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-red">🗑</div>
+        <div>
+          <div class="flow-card-title">DELETE /api/messages/:id — Soft Delete</div>
+          <div class="flow-card-sub">Data actually delete nahi hota — sirf flag set hota hai</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="warn">Ye <strong>soft delete</strong> hai — record memory se remove nahi hota, sirf <code>is_deleted: true</code> set hota hai. GET requests mein ye message nahi aayega.</div>
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">ID se message dhundhna</div>
+            <div class="step-desc">store.deleteMessage(id) call hota hai.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">is_deleted = true</div>
+            <div class="step-desc">Message object ka <code>is_deleted</code> flag true ho jaata hai, <code>updated_at</code> update hota hai.</div>
+            <span class="step-file">store.js:40</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">message_deleted broadcast</div>
+            <div class="step-desc">WebSocket se sabko sirf <code>{ id: 5 }</code> bheja jaata hai — clients apne end se message hide kar lete hain.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FLOW 3: WEBSOCKET ══════════ -->
+  <div class="section" id="ws-flow">
+    <div class="section-title">3. WebSocket Flow</div>
+
+    <div class="note">WebSocket mein client aur server dono directions mein real-time events hote hain — koi polling nahi, persistent connection rehta hai.</div>
+
+    <!-- Connection flow -->
+    <div class="flow-card open">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-purple">🔌</div>
+        <div>
+          <div class="flow-card-title">Connection Establish</div>
+          <div class="flow-card-sub">Client connect hone par kya hota hai</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="timeline">
+          <div class="timeline-item purple">
+            <div class="timeline-label">Client</div>
+            <div class="timeline-title">ws://localhost:3020/ws se connect karta hai</div>
+            <div class="timeline-desc">TCP handshake + WebSocket upgrade hota hai.</div>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Server — Auto Send 1</div>
+            <div class="timeline-title">history event</div>
+            <div class="timeline-desc">Store se sabhi non-deleted messages ek saath client ko bheje jaate hain — taaki chat history dikh sake.</div>
+          </div>
+          <div class="timeline-item green">
+            <div class="timeline-label">Server — Auto Send 2</div>
+            <div class="timeline-title">online_users event</div>
+            <div class="timeline-desc">Currently online users ki list aur count bheja jaata hai.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-label">Client</div>
+            <div class="timeline-title">join event bhejta hai</div>
+            <div class="timeline-desc"><code>{ event: "join", data: { name: "Rahul" } }</code> — isse user registered hota hai. Server sabko <code>user_joined</code> broadcast karta hai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message flow via WS -->
+    <div class="flow-card open">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-purple">💬</div>
+        <div>
+          <div class="flow-card-title">send_message — WebSocket se message bhejne ka flow</div>
+          <div class="flow-card-sub">Real-time message delivery</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="code-block"><span class="comment">// Client A send karta hai</span>
+{
+  <span class="key">"event"</span>: <span class="str">"send_message"</span>,
+  <span class="key">"data"</span>: { <span class="key">"sender"</span>: <span class="str">"Rahul"</span>, <span class="key">"message"</span>: <span class="str">"Hello!"</span> }
+}
+
+       <span class="arrow">↓  Server receive karta hai</span>
+
+<span class="comment">// store.addMessage() → nayi msg banti hai</span>
+<span class="comment">// broadcast() → sabhi clients ko bhejta hai</span>
+
+       <span class="arrow">↓  Client A + B + C sabko milta hai</span>
+
+{
+  <span class="key">"event"</span>: <span class="str">"new_message"</span>,
+  <span class="key">"data"</span>: { <span class="key">"id"</span>: <span class="num">1</span>, <span class="key">"sender"</span>: <span class="str">"Rahul"</span>, <span class="key">"message"</span>: <span class="str">"Hello!"</span>, ... }
+}</div>
+      </div>
+    </div>
+
+    <!-- Typing flow -->
+    <div class="flow-card">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-yellow">⌨</div>
+        <div>
+          <div class="flow-card-title">Typing Indicator Flow</div>
+          <div class="flow-card-sub">typing_start / typing_stop</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Client typing_start bhejta hai</div>
+            <div class="step-desc"><code>{ event: "typing_start", data: { sender: "Rahul" } }</code></div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">store.addTyping("Rahul")</div>
+            <div class="step-desc">Typing array mein Rahul add hota hai — duplicate check hota hai.</div>
+            <span class="step-file">store.js:81</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Sabko broadcast</div>
+            <div class="step-desc"><code>{ event: "typing", data: { sender: "Rahul", is_typing: true, typing_users: [...] } }</code> — sabke screen pe "Rahul is typing..." dikh sakta hai.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">typing_stop pe remove</div>
+            <div class="step-desc">Rahul typing array se hata diya jaata hai, <code>is_typing: false</code> broadcast hota hai.</div>
+            <span class="step-file">store.js:86</span>
+          </div>
+        </div>
+        <div class="note">Disconnect hone par bhi <code>removeTyping()</code> automatically call hota hai <code>ws.on('close')</code> mein.</div>
+      </div>
+    </div>
+
+    <!-- Disconnect flow -->
+    <div class="flow-card">
+      <div class="flow-card-header" onclick="toggleCard(this)">
+        <div class="flow-icon icon-red">🚪</div>
+        <div>
+          <div class="flow-card-title">Disconnect Flow</div>
+          <div class="flow-card-sub">User ke connection close hone par</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="flow-card-body">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">ws.on('close') fire hota hai</div>
+            <div class="step-desc">Browser close, network drop ya manual disconnect.</div>
+            <span class="step-file">websocket.js:108</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">User + Typing clean up</div>
+            <div class="step-desc"><code>store.removeUser()</code> aur <code>store.removeTyping()</code> call hote hain — users array se nikala jaata hai.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">user_left broadcast</div>
+            <div class="step-desc">Sabko bata diya jaata hai ki user chala gaya aur updated online count bhi milta hai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FLOW 4: STORE ══════════ -->
+  <div class="section" id="store-flow">
+    <div class="section-title">4. Data Store (store.js)</div>
+
+    <div class="warn">Store completely <strong>in-memory</strong> hai — koi database connection nahi. Server restart = sab data gone.</div>
+
+    <div class="two-col">
+      <div class="mini-card">
+        <div class="mini-card-title">messages[ ]</div>
+        <ul>
+          <li><strong>id</strong> — auto-increment number</li>
+          <li><strong>sender</strong> — username string</li>
+          <li><strong>message</strong> — text content</li>
+          <li><strong>message_type</strong> — "text" default</li>
+          <li><strong>is_edited</strong> — boolean flag</li>
+          <li><strong>is_deleted</strong> — soft delete flag</li>
+          <li><strong>created_at / updated_at</strong> — ISO timestamps</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title">users[ ] &amp; typing[ ]</div>
+        <ul>
+          <li><strong>socketId</strong> — IP + timestamp unique key</li>
+          <li><strong>name</strong> — display name</li>
+          <li><strong>joined_at</strong> — ISO timestamp</li>
+          <li>— — —</li>
+          <li><strong>sender</strong> — typing user ka name</li>
+          <li><strong>started_at</strong> — typing start time</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="data-table">
+      <div class="data-table-header">Store Methods</div>
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Kaam</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="field-name">getAllMessages()</span></td>
+            <td>Sabhi non-deleted messages return karta hai</td>
+            <td><code>is_deleted: false</code> filter lagta hai</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">getMessageById(id)</span></td>
+            <td>ID se ek message dhundhta hai</td>
+            <td>Deleted messages nahi milte</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">addMessage(sender, msg, type)</span></td>
+            <td>Nayi message create karta hai</td>
+            <td>nextId++ se auto-ID milta hai</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">updateMessage(id, newMsg)</span></td>
+            <td>Message content update karta hai</td>
+            <td><code>is_edited: true</code> set hota hai</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">deleteMessage(id)</span></td>
+            <td>Soft delete karta hai</td>
+            <td><code>is_deleted: true</code> set hota hai</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">addUser / removeUser</span></td>
+            <td>Online users manage karta hai</td>
+            <td>Duplicate check hai addUser mein</td>
+          </tr>
+          <tr>
+            <td><span class="field-name">addTyping / removeTyping</span></td>
+            <td>Typing users track karta hai</td>
+            <td>Disconnect pe auto-remove hota hai</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ LIFECYCLE ══════════ -->
+  <div class="section" id="lifecycle">
+    <div class="section-title">Complete Lifecycle</div>
+
+    <div class="code-block"><span class="comment">═══════════════════════════════════════════════════════
+  CHAT APP — COMPLETE LIFECYCLE
+═══════════════════════════════════════════════════════</span>
+
+<span class="tag">[SERVER START]</span>
+  app.js loads → Express configure → HTTP server create
+  → WebSocket attach at /ws → Listen on port 3020
+
+<span class="tag">[USER A CONNECTS]</span>
+  ws://localhost:3020/ws  →  connection event
+  Server → A:  { event: "history",      data: [...messages] }
+  Server → A:  { event: "online_users", data: { count: 1, users: [...] } }
+
+<span class="tag">[USER A JOINS]</span>
+  A → Server:  { event: "join", data: { name: "Rahul" } }
+  store.addUser("Rahul")
+  Server → ALL: { event: "user_joined",  data: { name: "Rahul", online_count: 1 } }
+  Server → ALL: { event: "online_users", data: { count: 1, ... } }
+
+<span class="tag">[USER B CONNECTS & JOINS]</span>
+  Same as above. online_count = 2.
+
+<span class="tag">[USER A TYPING]</span>
+  A → Server:  { event: "typing_start", data: { sender: "Rahul" } }
+  store.addTyping("Rahul")
+  Server → ALL: { event: "typing", data: { sender: "Rahul", is_typing: true, ... } }
+
+<span class="tag">[USER A SENDS MESSAGE]</span>
+  A → Server:  { event: "send_message", data: { sender: "Rahul", message: "Hello!" } }
+  store.addTyping remove → store.addMessage() → id: 5
+  Server → ALL: { event: "new_message", data: { id: 5, ... } }
+
+<span class="tag">[USER A EDITS MESSAGE]</span>
+  A → Server:  { event: "edit_message", data: { id: 5, message: "Hello World!" } }
+  store.updateMessage(5) → is_edited: true
+  Server → ALL: { event: "message_updated", data: { id: 5, is_edited: true, ... } }
+
+<span class="tag">[USER A DELETES MESSAGE]</span>
+  A → Server:  { event: "delete_message", data: { id: 5 } }
+  store.deleteMessage(5) → is_deleted: true
+  Server → ALL: { event: "message_deleted", data: { id: 5 } }
+
+<span class="tag">[USER B DISCONNECTS]</span>
+  ws.on('close') fires
+  store.removeUser() + store.removeTyping()
+  Server → ALL: { event: "user_left",    data: { name: "Priya", online_count: 1 } }
+  Server → ALL: { event: "online_users", data: { count: 1, ... } }</div>
+  </div>
+
+  <!-- ══════════ SCENARIOS ══════════ -->
+  <div class="section" id="scenarios">
+    <div class="section-title">Example Scenarios</div>
+
+    <div class="scenario">
+      <div class="scenario-title">💬 Scenario 1 — REST se message bhejne par WebSocket update</div>
+      <div class="scenario-steps">
+        <div class="scenario-step">
+          <div class="sn">1</div>
+          <div class="sd">Postman se <code>POST /api/messages</code> karo <strong>{ sender: "Admin", message: "Server message" }</strong></div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">2</div>
+          <div class="sd">Express route mein <code>store.addMessage()</code> call hota hai — message save hoti hai</div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">3</div>
+          <div class="sd"><code>wsBroadcast()</code> call hota hai — <strong>sabhi connected WebSocket clients</strong> ko <code>new_message</code> event milta hai automatically</div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">4</div>
+          <div class="sd">Postman ko <code>201 Created</code> milta hai, aur browser chat mein message turant appear ho jaata hai</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-title">👥 Scenario 2 — Multiple users ka real-time chat</div>
+      <div class="scenario-steps">
+        <div class="scenario-step">
+          <div class="sn">1</div>
+          <div class="sd">User <strong>Rahul</strong> aur <strong>Priya</strong> dono <code>/ws</code> se connect hote hain — dono ko <code>history</code> + <code>online_users</code> milte hain</div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">2</div>
+          <div class="sd">Rahul <code>typing_start</code> bhejta hai → Priya ke screen pe "Rahul is typing..." dikhta hai</div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">3</div>
+          <div class="sd">Rahul <code>send_message</code> karta hai → <strong>dono</strong> ko <code>new_message</code> broadcast milta hai simultaneously</div>
+        </div>
+        <div class="scenario-step">
+          <div class="sn">4</div>
+          <div class="sd">Priya browser close karti hai → Rahul ko <code>user_left</code> event milta hai, <code>online_count: 1</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LIMITATIONS ══════════ -->
+  <div class="section" id="limitations">
+    <div class="section-title">Limitations &amp; Notes</div>
+
+    <div class="two-col">
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--red);">Current Limitations</div>
+        <ul>
+          <li><strong>No persistence</strong> — restart pe data gone</li>
+          <li><strong>No auth</strong> — koi bhi kisi ka naam use kar sakta hai</li>
+          <li><strong>No message limit</strong> — unlimited characters</li>
+          <li><strong>No rooms</strong> — sirf ek global chat</li>
+          <li><strong>No pagination</strong> — sabhi messages ek saath load</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--green);">Future Improvements</div>
+        <ul>
+          <li><strong>PostgreSQL</strong> activate karo (schema ready hai)</li>
+          <li><strong>Auth/JWT</strong> add karo</li>
+          <li><strong>Message length limit</strong> add karo</li>
+          <li><strong>Multiple rooms</strong> support</li>
+          <li><strong>Pagination</strong> for history</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.8rem;text-align:center;">
+    Chat App System Flow &nbsp;·&nbsp; Generated 2026-06-18 &nbsp;·&nbsp; Port 3020
+  </div>
+
+</main>
+
+<script>
+  function toggleCard(header) {
+    header.parentElement.classList.toggle('open');
+  }
+
+  // Smooth scroll active sidebar link
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('.sidebar a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
