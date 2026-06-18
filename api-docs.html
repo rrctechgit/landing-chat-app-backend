@@ -498,8 +498,22 @@
   <!-- Base URL -->
   <div class="section" id="base-url">
     <div class="section-title">Base URL</div>
-    <div class="base-url-box">🌐 http://localhost:3020</div>
-    <div class="base-url-box" style="color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.5rem 0 0.25rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Local</span>
+      <div class="base-url-box" style="flex:1;margin:0;">🌐 http://localhost:3020</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.25rem 0 0.5rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Live</span>
+      <div class="base-url-box" style="flex:1;margin:0;color:#4caf82;border-color:#2d6b4a;">🌐 https://chatapp.rrcbase.com</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.5rem 0 0.25rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Local</span>
+      <div class="base-url-box" style="flex:1;margin:0;color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.25rem 0 1rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Live</span>
+      <div class="base-url-box" style="flex:1;margin:0;color:#ce93d8;border-color:#5a2e7a;">🔌 wss://chatapp.rrcbase.com/ws</div>
+    </div>
     <div class="note">All REST endpoints are prefixed with <code>/api</code>. No authentication required on any endpoint.</div>
   </div>
 
@@ -861,7 +875,14 @@ Host: localhost:3020</div>
 
     <p style="color:var(--muted);margin-bottom:1rem;">The server uses the native <code>ws</code> library. All messages are JSON strings.</p>
 
-    <div class="base-url-box" style="color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.5rem 0 0.25rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Local</span>
+      <div class="base-url-box" style="flex:1;margin:0;color:#ce93d8;border-color:#5a2e7a;">🔌 ws://localhost:3020/ws</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;margin:0.25rem 0 1rem;">
+      <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);min-width:40px;">Live</span>
+      <div class="base-url-box" style="flex:1;margin:0;color:#ce93d8;border-color:#5a2e7a;">🔌 wss://chatapp.rrcbase.com/ws</div>
+    </div>
 
     <div class="note">On successful connection, the server automatically sends a <strong>history</strong> event with all existing messages, and an <strong>online_users</strong> event.</div>
 
